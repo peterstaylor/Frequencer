@@ -10,6 +10,7 @@ last = 440
 averaged = 0
 prevOutput = 0
 h2vref = 58.14
+volThresh = 0.25
 
 function init()
     input[1].mode('freq',0.001)
