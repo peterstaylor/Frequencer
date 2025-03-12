@@ -14,6 +14,9 @@ function init()
     input[1].mode('freq',0.001)
     input[2].mode('change',1,0.05,'rising')
     output[1].scale({})
+    output[2].scale({})
+    output[3].scale({})
+    output[4].scale({})
 end
 
 input[1].freq = function(freq)
