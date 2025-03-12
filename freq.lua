@@ -15,14 +15,16 @@ function init()
     input[2].mode('change',1,0.05,'rising')
     output[1].scale({})
     output[2].scale({})
-    output[3].scale({})
-    output[4].scale({})
+    output[3].slew = 1
+    output[4].slew = 1
 end
 
 input[1].freq = function(freq)
     last = freq
     accum = accum + freq
     counter = counter + 1
+    output[3].volts = map(last)
+    output[4].volts = map(accum / counter)
 end
 
 input[2].change = function(s)
@@ -35,8 +37,7 @@ input[2].change = function(s)
     v2 = map(averaged)
     output[1].volts = v1
     output[2].volts = v2
-    output[3].volts = v2 - 2
-    output[4].volts = v2 + 1
+    
 end
 
 function map(value)
