@@ -9,8 +9,9 @@ counter = 1
 last = 440
 averaged = 0
 prevOutput = 0
-h2vref = 58.14
+h2vref = 58.14 -- experimentally derived
 volThresh = 0.25
+volgate = 0
 
 function init()
     input[1].mode('freq',0.001)
@@ -32,7 +33,7 @@ end
 
 input[2].volume = function(vol)
     print(vol)
-    if vol > volThresh then 
+    if vol > volThresh and volgate == 0 then 
         averaged = accum / counter
         counter = 1
         accum = last
@@ -42,6 +43,9 @@ input[2].volume = function(vol)
         v2 = map(averaged)
         output[1].volts = v1
         output[2].volts = v2 
+        volgate = 1
+    elseif vol <= volThresh and volgate == 1 then
+        volgate = 0
     end
 end
 
