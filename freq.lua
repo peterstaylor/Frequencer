@@ -1,8 +1,10 @@
 --- Frequencer
 -- in1: Any Audio Input
--- in2: Clock
--- out1: Sequenced Pitch
--- out2: sampled input
+-- in2: Any Audio Input, theoreitcally same as in1
+-- out1: Last Detected Pitch
+-- out2: Accumulated Detected Pitch
+-- out3: Envelope Follower
+-- out4: gate from volume detection
 
 accum = 0
 counter = 1
@@ -12,27 +14,42 @@ prevOutput = 0
 h2vref = 58.14 -- experimentally derived
 volThresh = 0.25
 volgate = 0
+follower = {}
+volumeSR = 0.01
+follwerIndex = 1
+highVoltage = 7
 
 function init()
     input[1].mode('freq',0.001)
-    --input[2].mode('change',1,0.05,'rising')
-    input[2].mode('volume', 0.01)
+    input[2].mode('volume', volumeSR)
     output[1].scale({})
     output[2].scale({})
-    output[3].slew = 1
-    output[4].slew = 1
+    output[4].volts = 0
+
+    -- initialize envelope follower array to contain last second of volume readings
+    for i = 1, (1/volumeSR) do
+        follower[i] = 0 
+    end 
 end
 
 input[1].freq = function(freq)
     last = freq
     accum = accum + freq
     counter = counter + 1
-    output[3].volts = map(last)
-    output[4].volts = map(accum / counter)
 end
 
 input[2].volume = function(vol)
     print(vol)
+
+    -- update envelope follower array and calculate rolling average
+    follower[followerIndex] = vol
+    followerIndex = followerIndex + 1
+    if followerIndex > 100 then
+        followerIndex = 1
+    end
+    output[3].volts = averageEnvelope(follower) * highVoltage
+
+    -- check if threshold has been exceeded and upate gate and pitches
     if vol > volThresh and volgate == 0 then 
         averaged = accum / counter
         counter = 1
@@ -43,26 +60,28 @@ input[2].volume = function(vol)
         v2 = map(averaged)
         output[1].volts = v1
         output[2].volts = v2 
+        output[4].volts = highVoltage
         volgate = 1
     elseif vol <= volThresh and volgate == 1 then
         volgate = 0
+        output[4].volts = 0
     end
 end
 
---input[2].change = function(s)
---    averaged = accum / counter
---    counter = 1
---    accum = last
---    diff = math.abs(prevOutput - averaged)
---    prevOutput = averaged
---    v1 = map(last)
---    v2 = map(averaged)
---    output[1].volts = v1
---    output[2].volts = v2    
---end
-
+-- maps measured frequency to a v/oct voltage
 function map(value)
     volt = hztovolts(value [,h2vref])
     --volt = -5.81 + 1.43 * math.log(value)
     return volt
+end
+
+-- calculates average volume reading over the last second for EF
+function averageEnvelope(array)
+    pile = 0
+    for i = 1, 1/volumeSR do
+        pile = pile + array[i]
+    end
+    
+    average = pile * volumeSR
+    return average
 end
