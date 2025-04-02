@@ -22,8 +22,8 @@ retrigcap = 20
 function init()
     input[1].mode('freq',0.001)
     input[2].mode('volume', volumeSR)
-    output[1].scale({})
-    output[2].scale({})
+    output[1].scale({0,4,7,9})
+    output[2].scale({0,2,4,5,7,9,11})
     output[4].action = pulse(0.001, 7, 1)
    
 end
