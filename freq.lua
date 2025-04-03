@@ -85,4 +85,3 @@ function averageArray(array, len)
     end
     return pile / len
 end
-
