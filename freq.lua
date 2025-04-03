@@ -15,29 +15,38 @@ volThresh = 2
 volgate = 0
 timeForEF = 0.25
 volumeSR = 0.01 
+freqSR = 0.001
 highVoltage = 7
 retrigdelay = 0 
 retrigcap = 20
+slewCount = 0
+freqAvg = {}
 
 function init()
-    input[1].mode('freq',0.001)
+    input[1].mode('freq',freqSR)
     input[2].mode('volume', volumeSR)
-    output[1].scale({0,4,7,9})
+    output[1].scale({0,9,7,9,4})
     output[2].scale({0,2,4,5,7,9,11})
-    output[4].action = pulse(0.001, 7, 1)
+    output[4].action = pulse(0.01, 7, 1)
    
 end
 
 input[1].freq = function(freq)
+    slewCount = slewCount + 1
+    
     last = freq
-    output[1].slew = 0.1
-    output[1].volts = map(last)
+    if slewCount > (1/freqSR) then
+        slewCount = 0 
+        output[1].slew = 2
+        go = map(freq/2)
+        output[1].volts = go
+    end
     accum = accum + freq
     counter = counter + 1
 end
 
 input[2].volume = function(vol)
-    output[3].slew = 0.1
+    output[3].slew = 0.5
     output[3].volts = vol
 
     if volgate == 1 then
@@ -49,7 +58,7 @@ input[2].volume = function(vol)
         averaged = accum / counter
         counter = 1
         accum = last
-        v2 = map(averaged)
+        v2 = map(averaged/2)
         output[2].volts = v2 
         output[4]()
         volgate = 1
@@ -61,7 +70,7 @@ end
 
 -- maps measured frequency to a v/oct voltage
 function map(value)
-    --volt = hztovolts(value [h2vref])
+    --volt = hztovolts(value)
     volt = -5.81 + 1.43 * math.log(value)
     return volt
 end
