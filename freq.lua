@@ -17,8 +17,6 @@ timeForEF = 0.25
 volumeSR = 0.01 
 freqSR = 0.001
 highVoltage = 7
-retrigdelay = 0 
-retrigcap = 20
 slewCount = 0
 freqAvg = {}
 
@@ -49,10 +47,6 @@ input[2].volume = function(vol)
     output[3].slew = 0.5
     output[3].volts = vol
 
-    if volgate == 1 then
-        retrigdelay = retrigdelay + 1
-    end
-
     -- check if threshold has been exceeded and upate gate and pitches
     if vol > volThresh and volgate == 0 then 
         averaged = accum / counter
@@ -62,9 +56,8 @@ input[2].volume = function(vol)
         output[2].volts = v2 
         output[4]()
         volgate = 1
-    elseif (vol <= volThresh and volgate == 1) or retrigdelay > retrigcap then
+    elseif (vol <= volThresh and volgate == 1) then
         volgate = 0
-        retrigdelay = 0
     end
 end
 
