@@ -1,22 +1,24 @@
 --- Frequencer
 -- in1: Any Audio Input
 -- in2: Any Audio Input, theoreitcally same as in1
--- out1: Wider Time Window Detected Pitch, Rolling Avg
--- out2: Smaller Time Window Detected Pitch, Output on Volume Thresh
--- out3: Envelope Follower of Input
--- out4: Gate from Volume Threshold of Audio Input
+-- out1: Faster Tracking Pitch Follower
+-- out2: Gate when output 1 updates
+-- out3: Slower Tracking Pitch Follower
+-- out4: Gate when output 3 updates
 
 h2vref = 58.14 -- experimentally derived
-volThresh = 2
+volThresh = 1
 volgate = 0
+volgateCount = 1
+volgateDiv = 4
 volumeSR = 0.01 
 freqSR = 0.05
 
 -- these variables are used to create a running average
 -- of the frequency detector output
-slowF = 10  -- in seconds
+slowF = 1  -- in seconds
 slowCounter = 1
-fastF = 0.5 -- in seconds
+fastF = 1 -- in seconds
 fastCounter = 1
 slowLen = slowF / freqSR
 fastLen = fastF / freqSR
@@ -27,7 +29,7 @@ function init()
     input[1].mode('freq',freqSR)
     input[2].mode('volume', volumeSR)
     output[1].scale({0,9,7,9,4})
-    output[2].scale({0,2,4,5,7,9,11})
+    output[3].scale({0,2,4,5,7,9,11})
 
     for i = 1, slowLen do
         slowAvg[i] = 0
@@ -39,35 +41,43 @@ function init()
 end
 
 input[1].freq = function(freq)
-    slowAvg[slowCounter] = freq
-    fastAvg[fastCounter] = freq
-
-    slowCounter = slowCounter + 1
-    fastCounter = fastCounter + 1
-
-    if slowCounter > slowLen then
-        slowCounter = 1
+    if volgate == 1 then
+        fastAvg[fastCounter] = freq
+        fastCounter = fastCounter + 1
+        if fastCounter > fastLen then
+            fastCounter = 1
+        end
     end
 
-    if fastCounter > fastLen then
-        fastCounter = 1
-    end
+    if volgate == 1 and volgateCount >= volgateDiv then
+        slowAvg[slowCounter] = freq
+        slowCounter = slowCounter + 1
 
-    output[1].volts = map(averageArray(slowAvg, slowLen))
+        if slowCounter > slowLen then
+            slowCounter = 1
+        end
+    end
 end
 
 input[2].volume = function(vol)
-    output[3].slew = 0.5
-    output[3].volts = vol
-
     -- check if threshold has been exceeded and upate gate and pitches
     if vol > volThresh and volgate == 0 then 
-        output[2].volts = map(averageArray(fastAvg, fastLen))
-        output[4].volts = 7
+        volgateCount = volgateCount + 1
+        output[1].volts = map(averageArray(fastAvg, fastLen))
+        output[2].volts = 7
         volgate = 1
+        if volgateCount >= volgateDiv then
+            output[3].volts = map(averageArracy(slowAvg, slowLen))
+            output[4].volts = 7
+        end
     elseif vol <= volThresh and volgate == 1 then
+        output[2].volts = 0
         output[4].volts = 0
         volgate = 0
+        
+        if volgateCount >= volgateDiv then
+            volgateCount = 1
+        end
     end
 end
 
