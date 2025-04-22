@@ -28,8 +28,8 @@ fastAvg = {}
 function init()
     input[1].mode('freq',freqSR)
     input[2].mode('volume', volumeSR)
-    output[1].scale({0,9,7,9,4})
-    output[3].scale({0,2,4,5,7,9,11})
+    output[1].scale({},19)
+    output[3].scale({},19)
 
     for i = 1, slowLen do
         slowAvg[i] = 0
