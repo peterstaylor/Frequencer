@@ -13,6 +13,7 @@ volgateCount = 1
 volgateDiv = 4
 volumeSR = 0.01 
 freqSR = 0.05
+maxPitchVolt = 10
 
 -- these variables are used to create a running average
 -- of the frequency detector output
@@ -91,5 +92,17 @@ function averageArray(array, len)
     for i = 1, len do
         pile = pile + array[i]
     end
-    return pile / len
+    return clamp(pile / len)
+end
+
+function clamp(val)
+    while val < 0 do
+        val = val + 1
+    end
+
+    while val > maxPitchVolt do
+        val = val - 1
+    end
+
+    return val
 end
