@@ -20,7 +20,7 @@ slowF = 1  -- in seconds
 slowCounter = 1
 fastF = 1 -- in seconds
 fastCounter = 1
-slowLen = slowF / freqSR
+slowLen = (slowF / freqSR) * voltageDiv
 fastLen = fastF / freqSR
 slowAvg = {}
 fastAvg = {}
@@ -47,9 +47,7 @@ input[1].freq = function(freq)
         if fastCounter > fastLen then
             fastCounter = 1
         end
-    end
 
-    if volgate == 1 and volgateCount >= volgateDiv then
         slowAvg[slowCounter] = freq
         slowCounter = slowCounter + 1
 
@@ -64,11 +62,11 @@ input[2].volume = function(vol)
     if vol > volThresh and volgate == 0 then 
         volgateCount = volgateCount + 1
         output[1].volts = map(averageArray(fastAvg, fastLen))
-        output[2].volts = 7
+        output[2].volts = 8
         volgate = 1
         if volgateCount >= volgateDiv then
             output[3].volts = map(averageArracy(slowAvg, slowLen))
-            output[4].volts = 7
+            output[4].volts = 8
         end
     elseif vol <= volThresh and volgate == 1 then
         output[2].volts = 0
