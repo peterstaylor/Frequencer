@@ -12,16 +12,16 @@ volgate = 0
 volgateCount = 1
 volgateDiv = 4
 volumeSR = 0.01 
-freqSR = 0.05
-maxPitchVolt = 10
+freqSR = 0.005
+maxPitchVolt = 5
 
 -- these variables are used to create a running average
 -- of the frequency detector output
-slowF = 1  -- in seconds
+slowF = 0.1 * volgateDiv  -- in seconds
 slowCounter = 1
-fastF = 1 -- in seconds
+fastF = 0.1 -- in seconds
 fastCounter = 1
-slowLen = (slowF / freqSR) * voltageDiv
+slowLen = slowF / freqSR
 fastLen = fastF / freqSR
 slowAvg = {}
 fastAvg = {}
@@ -42,7 +42,9 @@ function init()
 end
 
 input[1].freq = function(freq)
+    
     if volgate == 1 then
+    
         fastAvg[fastCounter] = freq
         fastCounter = fastCounter + 1
         if fastCounter > fastLen then
@@ -62,14 +64,16 @@ input[2].volume = function(vol)
     -- check if threshold has been exceeded and upate gate and pitches
     if vol > volThresh and volgate == 0 then 
         volgateCount = volgateCount + 1
-        output[1].volts = map(averageArray(fastAvg, fastLen))
+        test =  map(averageArray(fastAvg, fastLen))
+        --print(test)
+        output[1].volts = test
         output[2].volts = 8
         volgate = 1
         if volgateCount >= volgateDiv then
-            output[3].volts = map(averageArracy(slowAvg, slowLen))
+            output[3].volts = map(averageArray(slowAvg, slowLen))
             output[4].volts = 8
         end
-    elseif vol <= volThresh and volgate == 1 then
+    elseif vol <= volThresh then
         output[2].volts = 0
         output[4].volts = 0
         volgate = 0
@@ -82,8 +86,8 @@ end
 
 -- maps measured frequency to a v/oct voltage
 function map(value)
-    --volt = hztovolts(value)
-    volt = -5.81 + 1.43 * math.log(value)
+    volt = hztovolts(value)
+    --volt = -5.81 + 1.43 * math.log(value)
     return volt
 end
 
@@ -92,7 +96,7 @@ function averageArray(array, len)
     for i = 1, len do
         pile = pile + array[i]
     end
-    return clamp(pile / len)
+    return pile / len
 end
 
 function clamp(val)
