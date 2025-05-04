@@ -25,6 +25,10 @@ slowAvg = {}
 fastAvg = {}
 output3 = 0
 output1 = 0
+riseDefault = 0.05
+fallDefault = 0.5
+riseRange = riseDefault
+fallRange = fallDefault
 
 function init()
     input[1].mode('freq',freqSR)
@@ -64,7 +68,9 @@ input[2].change = function()
     output[1].volts = output1
     output[3].volts = output3
     output[2].action = pulse()
-    output[4].action = ar()
+    randRise = riseDefault + math.random()*riseRange
+    randFall = fallDefault + (math.random() - 0.5)*fallRange
+    output[4].action = ar(randRise, randFall)
 end
 
 -- maps measured frequency to a v/oct voltage
